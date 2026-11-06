@@ -1,14 +1,19 @@
 use std::sync::Arc;
-use winit::{application::ApplicationHandler, event::WindowEvent, event_loop::{self, ActiveEventLoop}, window::Window};
+use winit::{application::ApplicationHandler, event::WindowEvent, event_loop::{self, ActiveEventLoop}, window::{self, Window}};
 
+use crate::sim::sim::{self, Simulation};
 
 pub struct App {
     window: Option<Arc<Window>>,
+    sim: Option<Simulation>,
 }
 
 impl App {
     pub fn new() -> Self {
-        Self { window: None }
+        Self {
+            window: None,
+            sim: None
+        }
     }
 }
 
@@ -21,7 +26,11 @@ impl ApplicationHandler for App {
 
             let window = Arc::new(event_loop.create_window(window_attrs).unwrap());
             self.window = Some(window);
-            println!("Window initialised.");
+
+            println!("Initialising Machina sim...");
+            self.sim = Some(Simulation::new(320, 180));
+
+            println!("Window initialised, sim bound.");
         }
     }
 
@@ -32,7 +41,8 @@ impl ApplicationHandler for App {
                 event_loop.exit();
             }
             WindowEvent::RedrawRequested => {
-                if let Some(window) = &self.window {
+                if let (Some(window), Some(sim)) = (&self.window, &mut self.sim) {
+                    sim.step();
                     window.pre_present_notify();
                 }
             }
