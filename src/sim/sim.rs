@@ -1,5 +1,3 @@
-use std::thread::current;
-
 use super::element::{Cell, ElementType};
 use super::grid::WorldGrid;
 
@@ -77,7 +75,7 @@ impl Simulation {
                                 self.grid.next_frame[down_idx] = cell;
                                 continue;
                             } else {
-                                let left_first = (current_idx % 2 == 0);
+                                let left_first = current_idx % 2 == 0;
 
                                 let mut moved = false;
                                 let diagonals = if left_first { [x.checked_sub(1), Some(x + 1)] } else { [Some(x + 1), x.checked_sub(1)] };
