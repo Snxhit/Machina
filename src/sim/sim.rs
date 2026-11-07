@@ -43,6 +43,29 @@ impl Simulation {
         }
     }
 
+    pub fn spawn_pixel(&mut self, x: u32, y: u32, element: ElementType) {
+        if x < self.grid.width && y < self.grid.height {
+            let idx = self.grid.get_index(x, y);
+
+            if self.grid.current_frame[idx].element_type == ElementType::Empty {
+                let color = match element {
+                    ElementType::Sand => [194, 177, 128, 255],
+                    _ => [0, 0, 0, 255],
+                };
+
+                let cell = Cell {
+                    element_type: element,
+                    color,
+                    vel_y: 0.0,
+                    temp: 25.0,
+                };
+
+                self.grid.current_frame[idx] = cell;
+                self.grid.next_frame[idx] = cell;
+            }
+        }
+    }
+
     pub fn step(&mut self) {
         let width = self.grid.width;
         let height = self.grid.height;
@@ -105,8 +128,6 @@ impl Simulation {
                 }
             }
         }
-
-
 
         self.grid.swap_buffers();
         self.update_raw_buffer();

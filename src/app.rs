@@ -8,6 +8,8 @@ pub struct App {
     window: Option<Arc<Window>>,
     sim: Option<Simulation>,
     pixels: Option<Pixels<'static>>,
+    mouse_pos: (f32, f32),
+    is_left_clicked: bool,
 }
 
 impl App {
@@ -16,6 +18,8 @@ impl App {
             window: None,
             sim: None,
             pixels: None,
+            mouse_pos: (0.0, 0.0),
+            is_left_clicked: false,
         }
     }
 }
@@ -52,6 +56,14 @@ impl ApplicationHandler for App {
                 println!("Close requested, exiting.");
                 event_loop.exit();
             }
+            WindowEvent::MouseInput { state, button, .. } => {
+                if button == winit::event::MouseButton::Left {
+                    self.is_left_clicked = state.is_pressed();
+                }
+            }
+            WindowEvent::CursorMoved { position , ..} => {
+                self.mouse_pos = (position.x as f32, position.y as f32);
+            }
             WindowEvent::Resized(physical_size) => {
                 if let Some(pixels) = &mut self.pixels {
                     let _ = pixels.resize_surface(physical_size.width, physical_size.height);
@@ -59,6 +71,19 @@ impl ApplicationHandler for App {
             }
             WindowEvent::RedrawRequested => {
                 if let (Some(window), Some(sim), Some(pixels)) = (&self.window, &mut self.sim, &mut self.pixels) {
+
+                    if self.is_left_clicked {
+                        let window_size = window.inner_size();
+
+                        let scale_x = sim.grid.width as f32 / window_size.width as f32;
+                        let scale_y = sim.grid.height as f32 / window_size.height as f32;
+
+                        let sim_x = (self.mouse_pos.0 * scale_x) as u32;
+                        let sim_y = (self.mouse_pos.1 * scale_y) as u32;
+
+                        sim.spawn_pixel(sim_x, sim_y, crate::sim::element::ElementType::Sand);
+                    }
+
                     sim.step();
 
                     let frame = pixels.frame_mut();
