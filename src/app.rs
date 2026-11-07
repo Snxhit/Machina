@@ -81,7 +81,7 @@ impl ApplicationHandler for App {
                         let sim_x = (self.mouse_pos.0 * scale_x) as u32;
                         let sim_y = (self.mouse_pos.1 * scale_y) as u32;
 
-                        sim.spawn_pixel(sim_x, sim_y, crate::sim::element::ElementType::Sand);
+                        sim.spawn_pixel(sim_x, sim_y, crate::sim::element::ElementType::Water);
                     }
 
                     sim.step();

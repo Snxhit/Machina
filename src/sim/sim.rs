@@ -50,6 +50,7 @@ impl Simulation {
             if self.grid.current_frame[idx].element_type == ElementType::Empty {
                 let color = match element {
                     ElementType::Sand => [194, 177, 128, 255],
+                    ElementType::Water => [14, 135, 204, 255],
                     _ => [0, 0, 0, 255],
                 };
 
@@ -124,6 +125,86 @@ impl Simulation {
                             self.grid.next_frame[current_idx] = cell;
                         }
                     },
+
+                    ElementType::Water => {
+                        if y + 1 < height {
+                            let down_idx = self.grid.get_index(x, y + 1);
+
+                            let below_empty = self.grid.current_frame[down_idx].element_type == ElementType::Empty
+                                && self.grid.next_frame[down_idx].element_type == ElementType::Empty;
+
+                            if below_empty {
+                                self.grid.next_frame[down_idx] = cell;
+                            } else {
+                                let left_first = ((x + y) % 2 == 0);
+                                let mut moved = false;
+
+                                let diagonals = if left_first { [x.checked_sub(1), Some(x + 1)] } else { [Some(x + 1), x.checked_sub(1)] };
+
+                                for target_x in diagonals {
+                                    if let Some(nx) = target_x {
+                                        if nx < width {
+                                            let diag_idx = self.grid.get_index(nx, y + 1);
+                                            let diag_empty = self.grid.current_frame[diag_idx].element_type == ElementType::Empty
+                                                && self.grid.next_frame[diag_idx].element_type == ElementType::Empty;
+
+                                            if diag_empty {
+                                                self.grid.next_frame[diag_idx] = cell;
+                                                moved = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if !moved {
+                                    for target_x in diagonals {
+                                        if let Some(nx) = target_x {
+                                            if nx < width {
+                                                let side_idx = self.grid.get_index(nx, y);
+                                                let side_empty = self.grid.current_frame[side_idx].element_type == ElementType::Empty
+                                                    && self.grid.next_frame[side_idx].element_type == ElementType::Empty;
+                                                
+                                                if side_empty {
+                                                    self.grid.next_frame[side_idx] = cell;
+                                                    moved = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if !moved {
+                                    if self.grid.next_frame[current_idx].element_type == ElementType::Empty {
+                                        self.grid.next_frame[current_idx] = cell;
+                                    }
+                                }
+                            }
+                        } else {
+                            let left_first = ((x + y) % 2 == 0);
+                            let mut moved = false;
+                            let horizontals = if left_first { [x.checked_sub(1), Some(x + 1)] } else { [Some(x + 1), x.checked_sub(1)] };
+
+                            for target_x in horizontals {
+                                if let Some(nx) = target_x {
+                                    if nx < width {
+                                        let side_idx = self.grid.get_index(nx, y);
+                                        if self.grid.current_frame[side_idx].element_type == ElementType::Empty
+                                            && self.grid.next_frame[side_idx].element_type == ElementType::Empty {
+                                            self.grid.next_frame[side_idx] = cell;
+                                            moved = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                            if !moved && self.grid.next_frame[current_idx].element_type == ElementType::Empty {
+                                self.grid.next_frame[current_idx] = cell;
+                            }
+                        }
+                    }
+
                     _ => {},
                 }
             }
