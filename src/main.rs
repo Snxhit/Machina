@@ -1,5 +1,6 @@
 mod app;
 mod sim;
+mod gui;
 
 use app::App;
 use winit::event_loop::{ControlFlow, EventLoop};

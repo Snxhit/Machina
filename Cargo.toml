@@ -4,5 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+egui = "0.35.0"
+egui-winit = "0.35.0"
+egui-wgpu = "0.35.0"
 pixels = "0.17.2"
 winit = "0.30.13"
