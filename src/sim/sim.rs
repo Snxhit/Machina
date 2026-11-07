@@ -4,6 +4,7 @@ use super::grid::WorldGrid;
 pub struct Simulation {
     pub grid: WorldGrid,
     pub raw_output_buffer: Vec<u8>,
+    pub rng_state: u64,
 }
 
 impl Simulation {
@@ -12,7 +13,7 @@ impl Simulation {
 
         let raw_output_buffer = vec![0; (width * height * 4) as usize];
 
-        let mut sim = Self { grid, raw_output_buffer };
+        let mut sim = Self { grid, raw_output_buffer, rng_state: 0x9E3779B97F4A7C15 };
         sim.gen_demo();
         sim
     }
@@ -51,13 +52,9 @@ impl Simulation {
         }
 
         for y in (0..height).rev() {
-            let x_range: Vec<u32> = if y % 2 == 0 {
-                (0..width).collect()
-            } else {
-                (0..width).rev().collect()
-            };
-
-            for x in x_range {
+            let left_to_right = y % 2 == 0;
+            for i in 0..width {
+                let x = if left_to_right { i } else { width - 1 - i };
                 let current_idx = self.grid.get_index(x, y);
                 let cell = self.grid.current_frame[current_idx];
 
@@ -75,10 +72,13 @@ impl Simulation {
                                 self.grid.next_frame[down_idx] = cell;
                                 continue;
                             } else {
-                                let left_first = current_idx % 2 == 0;
-
                                 let mut moved = false;
-                                let diagonals = if left_first { [x.checked_sub(1), Some(x + 1)] } else { [Some(x + 1), x.checked_sub(1)] };
+
+                                self.rng_state ^= self.rng_state << 13;
+                                self.rng_state ^= self.rng_state >> 7;
+                                self.rng_state ^= self.rng_state << 17;
+
+                                let diagonals = if self.rng_state & 1 == 0 { [x.checked_sub(1), Some(x + 1)] } else { [Some(x + 1), x.checked_sub(1)] };
 
                                 for target_x in diagonals {
                                     if let Some(nx) = target_x {
