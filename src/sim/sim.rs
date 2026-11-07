@@ -127,79 +127,83 @@ impl Simulation {
                     },
 
                     ElementType::Water => {
+                        let mut moved = false;
+
                         if y + 1 < height {
                             let down_idx = self.grid.get_index(x, y + 1);
-
-                            let below_empty = self.grid.current_frame[down_idx].element_type == ElementType::Empty
-                                && self.grid.next_frame[down_idx].element_type == ElementType::Empty;
-
-                            if below_empty {
+                            if self.grid.current_frame[down_idx].element_type == ElementType::Empty
+                                && self.grid.next_frame[down_idx].element_type == ElementType::Empty {
                                 self.grid.next_frame[down_idx] = cell;
-                            } else {
-                                let left_first = ((x + y) % 2 == 0);
-                                let mut moved = false;
-
-                                let diagonals = if left_first { [x.checked_sub(1), Some(x + 1)] } else { [Some(x + 1), x.checked_sub(1)] };
-
-                                for target_x in diagonals {
-                                    if let Some(nx) = target_x {
-                                        if nx < width {
-                                            let diag_idx = self.grid.get_index(nx, y + 1);
-                                            let diag_empty = self.grid.current_frame[diag_idx].element_type == ElementType::Empty
-                                                && self.grid.next_frame[diag_idx].element_type == ElementType::Empty;
-
-                                            if diag_empty {
-                                                self.grid.next_frame[diag_idx] = cell;
-                                                moved = true;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if !moved {
-                                    for target_x in diagonals {
-                                        if let Some(nx) = target_x {
-                                            if nx < width {
-                                                let side_idx = self.grid.get_index(nx, y);
-                                                let side_empty = self.grid.current_frame[side_idx].element_type == ElementType::Empty
-                                                    && self.grid.next_frame[side_idx].element_type == ElementType::Empty;
-                                                
-                                                if side_empty {
-                                                    self.grid.next_frame[side_idx] = cell;
-                                                    moved = true;
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-
-                                if !moved {
-                                    if self.grid.next_frame[current_idx].element_type == ElementType::Empty {
-                                        self.grid.next_frame[current_idx] = cell;
-                                    }
-                                }
+                                moved = true;
                             }
-                        } else {
-                            let left_first = ((x + y) % 2 == 0);
-                            let mut moved = false;
-                            let horizontals = if left_first { [x.checked_sub(1), Some(x + 1)] } else { [Some(x + 1), x.checked_sub(1)] };
+                        }
 
-                            for target_x in horizontals {
+                        if !moved && y + 1 < height {
+                            let left_first = ((x + y) % 2 == 0);
+                            let diagonals = if left_first { [x.checked_sub(1), Some(x + 1)] } else { [Some(x + 1), x.checked_sub(1)] };
+
+                            for target_x in diagonals {
                                 if let Some(nx) = target_x {
                                     if nx < width {
-                                        let side_idx = self.grid.get_index(nx, y);
-                                        if self.grid.current_frame[side_idx].element_type == ElementType::Empty
-                                            && self.grid.next_frame[side_idx].element_type == ElementType::Empty {
-                                            self.grid.next_frame[side_idx] = cell;
+                                        let diag_idx = self.grid.get_index(nx, y + 1);
+                                        if self.grid.current_frame[diag_idx].element_type == ElementType::Empty
+                                            && self.grid.next_frame[diag_idx].element_type == ElementType::Empty {
+                                            self.grid.next_frame[diag_idx] = cell;
                                             moved = true;
                                             break;
                                         }
                                     }
                                 }
                             }
-                            if !moved && self.grid.next_frame[current_idx].element_type == ElementType::Empty {
+                        }
+
+                        if !moved {
+                            let left_first = ((x + y) % 2 == 0);
+                            let directions = if left_first { [-1, 1] } else { [1, -1] };
+
+                            let disp_rate = 5;
+
+                            for dx in directions {
+                                for i in 1..=disp_rate {
+                                    let target_x = (x as i32) + (dx * i);
+
+                                    if target_x < 0 || target_x >= (width as i32) {
+                                        break;
+                                    }
+
+                                    let nx = target_x as u32;
+                                    let check_idx = self.grid.get_index(nx, y);
+
+                                    if self.grid.current_frame[check_idx].element_type != ElementType::Empty {
+                                        break;
+                                    }
+
+                                    if self.grid.next_frame[check_idx].element_type != ElementType::Empty {
+                                        continue;
+                                    }
+
+                                    if y + 1 < height {
+                                        let down_check_idx = self.grid.get_index(nx, y + 1);
+                                        if self.grid.current_frame[down_check_idx].element_type == ElementType::Empty
+                                            && self.grid.next_frame[down_check_idx].element_type == ElementType::Empty {
+                                            self.grid.next_frame[check_idx] = cell;
+                                            moved = true;
+                                            break;
+                                        }
+                                    }
+
+                                    if i == disp_rate || (nx == 0 || nx == width - 1) {
+                                        self.grid.next_frame[check_idx] = cell;
+                                        moved = true;
+                                        break;
+                                    }
+                                }
+                                if moved { break; }
+                            }
+                        }
+
+                        if !moved {
+                            if self.grid.next_frame[current_idx].element_type == ElementType::Empty {
                                 self.grid.next_frame[current_idx] = cell;
                             }
                         }
