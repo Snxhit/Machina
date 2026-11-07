@@ -19,7 +19,7 @@ impl Cell {
     pub fn empty() -> Self {
         Self {
             element_type: ElementType::Empty,
-            color: [0, 0, 0, 1],
+            color: [0, 0, 0, 255],
             vel_y: 0.0,
             temp: 25.0,
         }

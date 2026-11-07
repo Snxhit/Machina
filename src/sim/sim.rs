@@ -13,6 +13,7 @@ impl Simulation {
         let raw_output_buffer = vec![0; (width * height * 4) as usize];
 
         let mut sim = Self { grid, raw_output_buffer };
+        sim.gen_demo();
         sim
     }
 
@@ -23,7 +24,7 @@ impl Simulation {
                 if y > self.grid.height - 20 || (x > 100 && x < 200 && y > 80 && y < 90) {
                     self.grid.current_frame[idx] = Cell {
                         element_type: ElementType::Sand,
-                        color: [0, 0, 0, 1],
+                        color: [194, 177, 128, 255],
                         vel_y: 0.0,
                         temp: 25.0,
                     };
@@ -31,6 +32,7 @@ impl Simulation {
             }
         }
         self.update_raw_buffer();
+        self.grid.next_frame.copy_from_slice(&self.grid.current_frame);
     }
 
     pub fn update_raw_buffer(&mut self) {
