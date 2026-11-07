@@ -10,6 +10,7 @@ pub struct App {
     pixels: Option<Pixels<'static>>,
     mouse_pos: (f32, f32),
     is_left_clicked: bool,
+    current_tool: crate::sim::element::ElementType,
 }
 
 impl App {
@@ -20,6 +21,7 @@ impl App {
             pixels: None,
             mouse_pos: (0.0, 0.0),
             is_left_clicked: false,
+            current_tool: crate::sim::element::ElementType::Sand,
         }
     }
 }
@@ -56,6 +58,21 @@ impl ApplicationHandler for App {
                 println!("Close requested, exiting.");
                 event_loop.exit();
             }
+            WindowEvent::KeyboardInput { event: key_event, ..} => {
+                if key_event.state.is_pressed() {
+                    if let winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyP) = key_event.physical_key {
+                        use crate::sim::element::ElementType;
+                        self.current_tool = match self.current_tool {
+                            ElementType::Sand => {
+                                ElementType::Water
+                            }
+                            _ => {
+                                ElementType::Sand
+                            }
+                        };
+                    }
+                }
+            }
             WindowEvent::MouseInput { state, button, .. } => {
                 if button == winit::event::MouseButton::Left {
                     self.is_left_clicked = state.is_pressed();
@@ -81,7 +98,7 @@ impl ApplicationHandler for App {
                         let sim_x = (self.mouse_pos.0 * scale_x) as u32;
                         let sim_y = (self.mouse_pos.1 * scale_y) as u32;
 
-                        sim.spawn_pixel(sim_x, sim_y, crate::sim::element::ElementType::Water);
+                        sim.spawn_pixel(sim_x, sim_y, self.current_tool);
                     }
 
                     sim.step();
