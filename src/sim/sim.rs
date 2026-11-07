@@ -48,8 +48,18 @@ impl Simulation {
         let width = self.grid.width;
         let height = self.grid.height;
 
+        for cell in self.grid.next_frame.iter_mut() {
+            *cell = Cell::empty();
+        }
+
         for y in (0..height).rev() {
-            for x in 0..width {
+            let x_range: Vec<u32> = if y % 2 == 0 {
+                (0..width).collect()
+            } else {
+                (0..width).rev().collect()
+            };
+
+            for x in x_range {
                 let current_idx = self.grid.get_index(x, y);
                 let cell = self.grid.current_frame[current_idx];
 
@@ -60,7 +70,7 @@ impl Simulation {
                     ElementType::Sand => {
                         if y + 1 < height {
                             let down_idx = self.grid.get_index(x, y + 1);
-                            let below_element = self.grid.current_frame[down_idx].element_type;
+                            let below_element = self.grid.next_frame[down_idx].element_type;
 
                             if below_element == ElementType::Empty {
                                 self.grid.next_frame[current_idx] = Cell::empty();
@@ -76,7 +86,7 @@ impl Simulation {
                                     if let Some(nx) = target_x {
                                         if nx < width {
                                             let diag_idx = self.grid.get_index(nx, y + 1);
-                                            if self.grid.current_frame[diag_idx].element_type == ElementType::Empty {
+                                            if self.grid.next_frame[diag_idx].element_type == ElementType::Empty {
                                                 self.grid.next_frame[current_idx] = Cell::empty();
                                                 self.grid.next_frame[diag_idx] = cell;
                                                 moved = true;
