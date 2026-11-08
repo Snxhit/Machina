@@ -90,10 +90,14 @@ impl Simulation {
                     ElementType::Sand => {
                         if y + 1 < height {
                             let down_idx = self.grid.get_index(x, y + 1);
-                            let below_element = self.grid.next_frame[down_idx].element_type;
+                            let below = self.grid.next_frame[down_idx];
 
-                            if below_element == ElementType::Empty {
+                            if below.element_type == ElementType::Empty {
                                 self.grid.next_frame[current_idx] = Cell::empty();
+                                self.grid.next_frame[down_idx] = cell;
+                                continue;
+                            } else if below.element_type == ElementType::Water {
+                                self.grid.next_frame[current_idx] = below;
                                 self.grid.next_frame[down_idx] = cell;
                                 continue;
                             } else {
@@ -109,8 +113,14 @@ impl Simulation {
                                     if let Some(nx) = target_x {
                                         if nx < width {
                                             let diag_idx = self.grid.get_index(nx, y + 1);
-                                            if self.grid.next_frame[diag_idx].element_type == ElementType::Empty {
+                                            let down_idx = self.grid.get_index(nx, y);
+                                            if self.grid.next_frame[diag_idx].element_type == ElementType::Empty && self.grid.current_frame[down_idx].element_type == ElementType::Empty && self.grid.next_frame[down_idx].element_type == ElementType::Empty {
                                                 self.grid.next_frame[current_idx] = Cell::empty();
+                                                self.grid.next_frame[diag_idx] = cell;
+                                                moved = true;
+                                                break;
+                                            } else if self.grid.next_frame[diag_idx].element_type == ElementType::Water && self.grid.current_frame[down_idx].element_type == ElementType::Empty && self.grid.next_frame[down_idx].element_type == ElementType::Empty {
+                                                self.grid.next_frame[current_idx] = self.grid.current_frame[diag_idx];
                                                 self.grid.next_frame[diag_idx] = cell;
                                                 moved = true;
                                                 break;
@@ -147,8 +157,9 @@ impl Simulation {
                                 if let Some(nx) = target_x {
                                     if nx < width {
                                         let diag_idx = self.grid.get_index(nx, y + 1);
-                                        if self.grid.current_frame[diag_idx].element_type == ElementType::Empty
-                                            && self.grid.next_frame[diag_idx].element_type == ElementType::Empty {
+                                        let down_idx = self.grid.get_index(nx, y);
+                                        if self.grid.current_frame[diag_idx].element_type == ElementType::Empty && self.grid.current_frame[down_idx].element_type == ElementType::Empty
+                                            && self.grid.next_frame[diag_idx].element_type == ElementType::Empty && self.grid.next_frame[down_idx].element_type == ElementType::Empty {
                                             self.grid.next_frame[diag_idx] = cell;
                                             moved = true;
                                             break;
@@ -158,7 +169,12 @@ impl Simulation {
                             }
                         }
 
-                        if !moved {
+                        let down_idx = self.grid.get_index(x, y + 1);
+                        let supported = y + 1 >= height
+                            || self.grid.current_frame[down_idx].element_type != ElementType::Empty
+                            || self.grid.next_frame[self.grid.get_index(x, y + 1)].element_type != ElementType::Empty;
+
+                        if !moved && supported {
                             let left_first = ((x + y) % 2 == 0);
                             let directions = if left_first { [-1, 1] } else { [1, -1] };
 
