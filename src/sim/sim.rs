@@ -51,6 +51,7 @@ impl Simulation {
                 let color = match element {
                     ElementType::Sand => [194, 177, 128, 255],
                     ElementType::Water => [14, 135, 204, 255],
+                    ElementType::Wall => [110, 110, 110, 255],
                     _ => [0, 0, 0, 255],
                 };
 
@@ -207,6 +208,10 @@ impl Simulation {
                                 self.grid.next_frame[current_idx] = cell;
                             }
                         }
+                    }
+
+                    ElementType::Wall => {
+                        self.grid.next_frame[current_idx] = cell;
                     }
 
                     _ => {},

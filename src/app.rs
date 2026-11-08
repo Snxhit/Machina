@@ -65,10 +65,16 @@ impl ApplicationHandler for App {
                         self.current_tool = match self.current_tool {
                             ElementType::Sand => {
                                 ElementType::Water
-                            }
-                            _ => {
+                            },
+                            ElementType::Water => {
+                                ElementType::Wall
+                            },
+                            ElementType::Wall => {
                                 ElementType::Sand
-                            }
+                            },
+                            _ => {
+                                ElementType::Empty
+                            },
                         };
                     }
                 }
