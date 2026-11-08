@@ -43,7 +43,7 @@ impl ApplicationHandler for App {
             let physical_size = window.inner_size();
             let surface_texture = SurfaceTexture::new(physical_size.width, physical_size.height, window);
 
-            println!("Initialising hardware graphids.");
+            println!("Initialising hardware graphics.");
             let pixels = Pixels::new(sim_width, sim_height, surface_texture)
                 .expect("Failed to initialise GPU buffer.");
 

@@ -4,7 +4,6 @@ pub enum ElementType {
     Sand,
     Water,
     Wall,
-    Custom,
 }
 
 #[derive(Clone, Copy, Debug)]
