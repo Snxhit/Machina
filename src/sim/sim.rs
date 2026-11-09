@@ -1,7 +1,5 @@
 use std::time::{Duration, Instant};
 
-use pixels::wgpu::wgc::ray_tracing::BuildAccelerationStructureError::TransformMissing;
-
 use super::element::{Cell, ElementType};
 use super::grid::WorldGrid;
 
