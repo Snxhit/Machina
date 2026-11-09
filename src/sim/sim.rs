@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use pixels::wgpu::wgc::ray_tracing::BuildAccelerationStructureError::TransformMissing;
 
 use super::element::{Cell, ElementType};
@@ -8,11 +10,18 @@ const MAX_TEMP: f32 = 1000.0;
 const FIRE_RADIATE: f32 = 4.0;
 const WATER_EVAP_TEMP: f32 = 100.0;
 
+pub struct Debug {
+    pub start_time: Instant,
+    pub last_frame: Instant,
+    pub frame_num: u64,
+}
+
 pub struct Simulation {
     pub grid: WorldGrid,
     pub raw_output_buffer: Vec<u8>,
     pub rng_state: u64,
     pub paused: bool,
+    pub debug: Debug,
 }
 
 impl Simulation {
@@ -21,7 +30,8 @@ impl Simulation {
 
         let raw_output_buffer = vec![0; (width * height * 4) as usize];
 
-        let mut sim = Self { grid, raw_output_buffer, rng_state: 0x9E3779B97F4A7C15, paused: true};
+        let mut debug = Debug { start_time: Instant::now(), last_frame: Instant::now(), frame_num: 0 };
+        let mut sim = Self { grid, raw_output_buffer, rng_state: 0x9E3779B97F4A7C15, paused: true, debug };
         sim.gen_demo();
         sim
     }
@@ -83,7 +93,28 @@ impl Simulation {
         }
     }
 
+    fn adv_debug(&mut self, output: bool) {
+        self.debug.frame_num += 1;
+
+        let elapsed: Duration = self.debug.start_time.elapsed();
+        let elapsed_secs: f32 = elapsed.as_secs_f32();
+
+        let now = Instant::now();
+        let delta: Duration = now.duration_since(self.debug.last_frame);
+        let dt: f32 = delta.as_secs_f32();
+        self.debug.last_frame = now;
+
+        // faulty? why it keep increasing?
+        //let fps = self.debug.frame_num as f32 / elapsed_secs;
+        let fps = if dt > 0.0 { 1.0 / dt } else { 0.0 };
+
+        if output {
+            println!("Frame: {} | Time: {:.2}s | Delta: {:.4}s | {:.1} FPS", self.debug.frame_num, elapsed_secs, dt, fps);
+        }
+    }
+
     pub fn step(&mut self) {
+        self.adv_debug(false);
         let width = self.grid.width;
         let height = self.grid.height;
 
