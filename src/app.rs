@@ -70,6 +70,9 @@ impl ApplicationHandler for App {
                                 ElementType::Wall
                             },
                             ElementType::Wall => {
+                                ElementType::Fire
+                            },
+                            ElementType::Fire => {
                                 ElementType::Sand
                             },
                             _ => {

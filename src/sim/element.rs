@@ -3,7 +3,9 @@ pub enum ElementType {
     Empty,
     Sand,
     Water,
+    Steam,
     Wall,
+    Fire,
 }
 
 #[derive(Clone, Copy, Debug)]

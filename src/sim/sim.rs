@@ -1,5 +1,12 @@
+use pixels::wgpu::wgc::ray_tracing::BuildAccelerationStructureError::TransformMissing;
+
 use super::element::{Cell, ElementType};
 use super::grid::WorldGrid;
+
+const HEAT_ABS_INDEX: [f32; 6] = [0.0, 0.3, 0.9, 0.0, 0.5, 0.0];
+const MAX_TEMP: f32 = 1000.0;
+const FIRE_RADIATE: f32 = 4.0;
+const WATER_EVAP_TEMP: f32 = 100.0;
 
 pub struct Simulation {
     pub grid: WorldGrid,
@@ -52,14 +59,21 @@ impl Simulation {
                     ElementType::Sand => [194, 177, 128, 255],
                     ElementType::Water => [14, 135, 204, 255],
                     ElementType::Wall => [110, 110, 110, 255],
+                    ElementType::Fire => [247, 55, 24, 255],
                     _ => [0, 0, 0, 255],
+                };
+
+                let temp = match element {
+                    ElementType::Fire => 1000.0,
+                    ElementType::Steam => 100.0,
+                    _ => 25.0,
                 };
 
                 let cell = Cell {
                     element_type: element,
                     color,
                     vel_y: 0.0,
-                    temp: 25.0,
+                    temp,
                 };
 
                 self.grid.current_frame[idx] = cell;
@@ -227,6 +241,84 @@ impl Simulation {
 
                     ElementType::Wall => {
                         self.grid.next_frame[current_idx] = cell;
+                    }
+
+                    ElementType::Fire => {
+                        let mut temp = cell.temp;
+                        if temp <= 25.0 {
+                            self.grid.next_frame[current_idx] = Cell::empty();
+                            continue;
+                        }
+
+                        // radiates 4.0 first for each neighbour
+                        // each neighbour absorbs a % of radiation
+                        temp -= FIRE_RADIATE;
+                        let mut new_cell = cell;
+                        new_cell.temp = temp;
+
+                        let neighbours = [
+                            (Some(x), y.checked_sub(1)), //up
+                            (Some(x + 1), Some(y)), //right
+                            (Some(x), Some(y + 1)), // down
+                            (x.checked_sub(1), Some(y)), //left
+                        ];
+
+                        for (nx, ny) in neighbours {
+                            let Some(nx) = nx else { continue; };
+                            let Some(ny) = ny else { continue; };
+                            if nx >= width || ny >= height { continue; };
+
+                            let n_idx = self.grid.get_index(nx, ny);
+                            let n_type = self.grid.current_frame[n_idx].element_type;
+                            let heat_coeff = HEAT_ABS_INDEX[n_type as usize];
+                            let gain = heat_coeff;
+
+                            self.grid.next_frame[n_idx].temp += gain;
+
+                            //todo: water -> steam logic at 100.0
+                        }
+
+                        let mut moved = false;
+                        if y > 0 {
+                            self.rng_state ^= self.rng_state << 13;
+                            self.rng_state ^= self.rng_state >> 7;
+                            self.rng_state ^= self.rng_state << 17;
+
+                            let choice = self.rng_state % 3;
+
+                            match choice {
+                                0 => {
+                                    let target_idx = self.grid.get_index(x, y - 1);
+                                    if self.grid.current_frame[target_idx].element_type == ElementType::Empty {
+                                        self.grid.next_frame[current_idx] = Cell::empty();
+                                        self.grid.next_frame[target_idx] = new_cell;
+                                        moved = true;
+                                    } 
+                                },
+                                1 => {
+                                    if self.grid.current_frame[self.grid.get_index(x - 1, y - 1)].element_type == ElementType::Empty
+                                        && self.grid.current_frame[self.grid.get_index(x - 1, y)].element_type == ElementType::Empty {
+                                        self.grid.next_frame[current_idx] = Cell::empty();
+                                        let target_idx = self.grid.get_index(x - 1, y - 1);
+                                        self.grid.next_frame[target_idx] = new_cell;
+                                        moved = true;
+                                    } 
+                                },
+                                _ => {
+                                    if self.grid.current_frame[self.grid.get_index(x + 1, y - 1)].element_type == ElementType::Empty
+                                        && self.grid.current_frame[self.grid.get_index(x + 1, y)].element_type == ElementType::Empty {
+                                        self.grid.next_frame[current_idx] = Cell::empty();
+                                        let target_idx = self.grid.get_index(x + 1, y - 1);
+                                        self.grid.next_frame[target_idx] = new_cell;
+                                        moved = true;
+                                    } 
+                                },
+                            };
+                       }
+
+                        if !moved {
+                            self.grid.next_frame[current_idx] = new_cell;
+                        }
                     }
 
                     _ => {},
