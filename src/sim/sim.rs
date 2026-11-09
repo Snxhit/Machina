@@ -12,6 +12,7 @@ pub struct Simulation {
     pub grid: WorldGrid,
     pub raw_output_buffer: Vec<u8>,
     pub rng_state: u64,
+    pub paused: bool,
 }
 
 impl Simulation {
@@ -20,7 +21,7 @@ impl Simulation {
 
         let raw_output_buffer = vec![0; (width * height * 4) as usize];
 
-        let mut sim = Self { grid, raw_output_buffer, rng_state: 0x9E3779B97F4A7C15 };
+        let mut sim = Self { grid, raw_output_buffer, rng_state: 0x9E3779B97F4A7C15, paused: true};
         sim.gen_demo();
         sim
     }
@@ -86,11 +87,14 @@ impl Simulation {
         let width = self.grid.width;
         let height = self.grid.height;
 
-        for cell in self.grid.next_frame.iter_mut() {
-            *cell = Cell::empty();
+        if !self.paused {
+            for cell in self.grid.next_frame.iter_mut() {
+                *cell = Cell::empty();
+            }
         }
 
         for y in (0..height).rev() {
+            if self.paused { break; }
             let left_to_right = y % 2 == 0;
             for i in 0..width {
                 let x = if left_to_right { i } else { width - 1 - i };

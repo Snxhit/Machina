@@ -60,25 +60,35 @@ impl ApplicationHandler for App {
             }
             WindowEvent::KeyboardInput { event: key_event, ..} => {
                 if key_event.state.is_pressed() {
-                    if let winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyP) = key_event.physical_key {
-                        use crate::sim::element::ElementType;
-                        self.current_tool = match self.current_tool {
-                            ElementType::Sand => {
-                                ElementType::Water
-                            },
-                            ElementType::Water => {
-                                ElementType::Wall
-                            },
-                            ElementType::Wall => {
-                                ElementType::Fire
-                            },
-                            ElementType::Fire => {
-                                ElementType::Sand
-                            },
-                            _ => {
-                                ElementType::Empty
-                            },
-                        };
+                    match key_event.physical_key {
+                        winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyP) => {
+                            use crate::sim::element::ElementType;
+                            self.current_tool = match self.current_tool {
+                                ElementType::Sand => {
+                                    ElementType::Water
+                                },
+                                ElementType::Water => {
+                                    ElementType::Wall
+                                },
+                                ElementType::Wall => {
+                                    ElementType::Fire
+                                },
+                                ElementType::Fire => {
+                                    ElementType::Sand
+                                },
+                                _ => {
+                                    ElementType::Empty
+                                },
+                            };
+                        },
+
+                        winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Space) => {
+                            if let Some(x) = self.sim.as_mut() {
+                                x.paused = !x.paused;
+                            };
+                        },
+
+                        _ => {},
                     }
                 }
             }
