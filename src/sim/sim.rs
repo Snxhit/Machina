@@ -29,7 +29,7 @@ impl Simulation {
         let raw_output_buffer = vec![0; (width * height * 4) as usize];
 
         let mut debug = Debug { start_time: Instant::now(), last_frame: Instant::now(), frame_num: 0 };
-        let mut sim = Self { grid, raw_output_buffer, rng_state: 0x9E3779B97F4A7C15, paused: true, debug };
+        let mut sim = Self { grid, raw_output_buffer, rng_state: 0x9E3779B97F4A7C15, paused: false, debug };
         sim.gen_demo();
         sim
     }
@@ -186,6 +186,11 @@ impl Simulation {
                     },
 
                     ElementType::Water => {
+                        if self.grid.current_frame[current_idx].temp > 100.0 {
+                            self.grid.next_frame[current_idx] = Cell { element_type: ElementType::Steam, color: [232, 239, 239, 255], vel_y: 0.0, temp: 100.0 };
+                            continue;
+                        }
+
                         let mut moved = false;
 
                         if y + 1 < height {
@@ -352,6 +357,10 @@ impl Simulation {
                         if !moved {
                             self.grid.next_frame[current_idx] = new_cell;
                         }
+                    }
+
+                    ElementType::Steam => {
+                        self.grid.next_frame[current_idx] = cell;
                     }
 
                     _ => {},
