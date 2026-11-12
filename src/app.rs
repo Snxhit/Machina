@@ -3,6 +3,7 @@ use pixels::{Pixels, SurfaceTexture};
 use winit::{application::ApplicationHandler, event::WindowEvent, event_loop::{self, ActiveEventLoop}, window::{self, Window}};
 
 use crate::sim::sim::{self, Simulation};
+use crate::ui::{UIState, render_ui};
 
 pub struct App {
     window: Option<Arc<Window>>,
@@ -124,6 +125,14 @@ impl ApplicationHandler for App {
 
                     let frame = pixels.frame_mut();
                     frame.copy_from_slice(&sim.raw_output_buffer);
+
+                    let state = UIState {
+                        brush_color: [100, 100, 100, 255],
+                        is_paused: sim.paused,
+                        fps: sim.debug.frame_num as u32,
+                    };
+
+                    render_ui(frame, sim.grid.width as usize, sim.grid.height as usize, &state);
 
                     if let Err(err) = pixels.render() {
                         println!("Graphics rendering error: {:?}", err);
