@@ -1,11 +1,13 @@
 use font8x8::{UnicodeFonts, BASIC_FONTS};
 
+use crate::sim::sim::Debug;
+
 const BAR_HEIGHT: usize = 12;
 
 pub struct UIState {
     pub brush_color: [u8; 4],
     pub is_paused: bool,
-    pub fps: u32,
+    pub debug: Debug,
 }
 
 pub fn is_over_ui(y: usize, height: usize) -> bool {
@@ -23,6 +25,10 @@ pub fn render_ui(frame: &mut [u8], width: usize, height: usize, state: &UIState)
 
     // heading at top
     draw_text(frame, width, height, width / 2 - 28 - 4, 2, "Machina", [200, 200, 200, 155]);
+
+    // debug at bottom
+    let debug_text = format!("TIME: {:.2} | FPS: {:.2}", state.debug.elapsed_secs, state.debug.fps); 
+    draw_text(frame, width, height, 4, height - BAR_HEIGHT + 3, &debug_text, [200, 200, 200, 155]);
 }
 
 // drawing helpers

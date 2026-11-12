@@ -129,7 +129,7 @@ impl ApplicationHandler for App {
                     let state = UIState {
                         brush_color: [100, 100, 100, 255],
                         is_paused: sim.paused,
-                        fps: sim.debug.frame_num as u32,
+                        debug: sim.debug,
                     };
 
                     render_ui(frame, sim.grid.width as usize, sim.grid.height as usize, &state);

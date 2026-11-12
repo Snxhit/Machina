@@ -8,10 +8,13 @@ const MAX_TEMP: f32 = 1000.0;
 const FIRE_RADIATE: f32 = 4.0;
 const WATER_EVAP_TEMP: f32 = 100.0;
 
+#[derive(Clone, Copy)]
 pub struct Debug {
     pub start_time: Instant,
     pub last_frame: Instant,
     pub frame_num: u64,
+    pub elapsed_secs: f32,
+    pub fps: f32,
 }
 
 pub struct Simulation {
@@ -28,7 +31,7 @@ impl Simulation {
 
         let raw_output_buffer = vec![0; (width * height * 4) as usize];
 
-        let mut debug = Debug { start_time: Instant::now(), last_frame: Instant::now(), frame_num: 0 };
+        let mut debug = Debug { start_time: Instant::now(), last_frame: Instant::now(), frame_num: 0, elapsed_secs: 0.0, fps: 0.0 };
         let mut sim = Self { grid, raw_output_buffer, rng_state: 0x9E3779B97F4A7C15, paused: false, debug };
         sim.gen_demo();
         sim
@@ -105,6 +108,14 @@ impl Simulation {
         // faulty? why it keep increasing?
         //let fps = self.debug.frame_num as f32 / elapsed_secs;
         let fps = if dt > 0.0 { 1.0 / dt } else { 0.0 };
+
+        self.debug.elapsed_secs = elapsed_secs;
+        
+        if fps > 55.0 && fps < 65.0 {
+            self.debug.fps = 60.0;
+        } else {
+            self.debug.fps = fps;
+        }
 
         if output {
             println!("Frame: {} | Time: {:.2}s | Delta: {:.4}s | {:.1} FPS", self.debug.frame_num, elapsed_secs, dt, fps);
